@@ -56,6 +56,17 @@ public sealed class InteractiveRunnerTests : IDisposable
     }
 
     [Fact]
+    public async Task LlmMove_UsesBrightColorWhenEnabled()
+    {
+        var output = new StringWriter();
+        var runner = CreateRunner(new ChessGame(), new FakeMoveClient("e4"), "/move\n/quit\ny\n", output, ChessSide.Black, true);
+
+        await runner.RunAsync();
+
+        Assert.Contains("\u001b[1;93me4\u001b[0m", output.ToString());
+    }
+
+    [Fact]
     public async Task ProviderCommands_PersistPerProviderSettings()
     {
         var fake = new FakeMoveClient();
@@ -83,7 +94,8 @@ public sealed class InteractiveRunnerTests : IDisposable
         FakeMoveClient client,
         string input,
         StringWriter output,
-        ChessSide llmSide)
+        ChessSide llmSide,
+        bool useColor = false)
     {
         var config = new AppConfig();
         config.EnsureDefaults();
@@ -103,7 +115,8 @@ public sealed class InteractiveRunnerTests : IDisposable
             null,
             new StringReader(input),
             output,
-            output);
+            output,
+            useColor);
     }
 
     public void Dispose()

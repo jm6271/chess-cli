@@ -14,6 +14,7 @@ public sealed class InteractiveRunner
     private readonly TextReader _input;
     private readonly TextWriter _output;
     private readonly TextWriter _error;
+    private readonly TerminalText _terminalText;
     private ProviderSettings _provider;
     private string? _savePath;
     private bool _endAnnounced;
@@ -29,7 +30,8 @@ public sealed class InteractiveRunner
         string? savePath,
         TextReader input,
         TextWriter output,
-        TextWriter error)
+        TextWriter error,
+        bool useColor = false)
     {
         _game = game;
         _notationStore = notationStore;
@@ -42,13 +44,15 @@ public sealed class InteractiveRunner
         _input = input;
         _output = output;
         _error = error;
+        // Styling stays opt-in so files, pipes, and test output remain clean.
+        _terminalText = new TerminalText(useColor);
     }
 
     public ChessSide LlmSide { get; }
 
     public async Task<int> RunAsync(CancellationToken cancellationToken = default)
     {
-        await _output.WriteLineAsync("chess-cli — enter a SAN move or /help");
+        await _terminalText.WriteLineAsync(_output, "chess-cli — enter a SAN move or /help", "1;96");
         await ShowBoardAsync();
 
         // This flag prevents an automatic response from repeating after a failed
@@ -104,7 +108,7 @@ public sealed class InteractiveRunner
 
             if (_game.TryMove(input, out var move, out var moveError))
             {
-                await _output.WriteLineAsync($"Played: {move}");
+                await _terminalText.WriteLineAsync(_output, $"Played: {move}", "92");
                 // The human just completed a ply, so the configured LLM may move.
                 allowAutomaticMove = true;
             }
@@ -177,12 +181,17 @@ public sealed class InteractiveRunner
     {
         try
         {
-            await _output.WriteLineAsync(
-                $"Asking {_provider.Provider}/{_provider.Model} to move for {_game.SideToMove}...");
+            await _terminalText.WriteLineAsync(
+                _output,
+                $"Asking {_provider.Provider}/{_provider.Model} to move for {_game.SideToMove}...",
+                "93");
             var result = await _moveCoordinator.MakeMoveAsync(_game, _provider, cancellationToken);
             if (result.Success)
             {
-                await _output.WriteLineAsync($"LLM move: {result.Move}");
+                // Keep the notation distinct from surrounding status text so it is
+                // easy to spot while playing on a physical board.
+                await _terminalText.WriteAsync(_output, "LLM move: ", "96");
+                await _terminalText.WriteLineAsync(_output, result.Move!, "1;34");
                 if (result.Attempts > 1)
                 {
                     await _output.WriteLineAsync($"Accepted after {result.Attempts} attempts.");

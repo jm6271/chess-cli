@@ -134,7 +134,9 @@ internal static class Program
             options.SavePath,
             Console.In,
             Console.Out,
-            Console.Error);
+            Console.Error,
+            useColor: !Console.IsOutputRedirected &&
+                      string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_COLOR")));
 
         try
         {
