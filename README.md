@@ -3,8 +3,6 @@
 `chess-cli` tracks a standard chess game while a human moves pieces on a physical board and an LLM supplies moves through an OpenAI-compatible API.
 
 ## Requirements
-
-- .NET 10 SDK
 - Ollama, OpenAI, or another server exposing `POST /v1/chat/completions`
 - A model name
 
@@ -43,6 +41,12 @@ chess-cli --provider ollama --model gemma3:12b --load game.pgn --save finished.p
 ```
 
 Run `chess-cli --help` for all startup options.
+
+Print the installed application version:
+
+```bash
+chess-cli --version
+```
 
 ## Playing
 

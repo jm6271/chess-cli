@@ -1,0 +1,80 @@
+name: Release binaries
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: linux-x64
+            os: ubuntu-latest
+            extension: ''
+          - rid: linux-x86
+            os: ubuntu-latest
+            extension: ''
+          - rid: linux-arm
+            os: ubuntu-latest
+            extension: ''
+          - rid: linux-arm64
+            os: ubuntu-latest
+            extension: ''
+          - rid: win-x64
+            os: windows-latest
+            extension: '.exe'
+          - rid: win-arm64
+            os: windows-latest
+            extension: '.exe'
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      # Native AOT is configured by the application project.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish Native AOT executable
+        shell: pwsh
+        run: |
+          $publishDirectory = "publish/${{ matrix.rid }}"
+          dotnet publish chess-cli/chess-cli.csproj --configuration Release --runtime ${{ matrix.rid }} --self-contained true --output $publishDirectory
+          New-Item -ItemType Directory -Path release-assets | Out-Null
+          # Keep the original executable name inside an architecture-labeled archive.
+          Compress-Archive -Path "$publishDirectory/chess-cli${{ matrix.extension }}" -DestinationPath "release-assets/chess-cli-${{ matrix.rid }}.zip"
+
+      - name: Store release executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: chess-cli-${{ matrix.rid }}
+          path: release-assets/chess-cli-${{ matrix.rid }}.zip
+          if-no-files-found: error
+
+  upload-to-release:
+    name: Upload executables
+    needs: publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download published executables
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      # The GitHub CLI attaches the six artifacts to the release that started this workflow.
+      - name: Attach executables to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" release-assets/* --clobber
