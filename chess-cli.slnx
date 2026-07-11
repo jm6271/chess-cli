@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="chess-cli/chess-cli.csproj" />
+  <Project Path="chess-cli.Tests/chess-cli.Tests.csproj" />
+</Solution>
