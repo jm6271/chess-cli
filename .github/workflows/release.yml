@@ -18,14 +18,8 @@ jobs:
           - rid: linux-x64
             os: ubuntu-latest
             extension: ''
-          - rid: linux-x86
-            os: ubuntu-latest
-            extension: ''
-          - rid: linux-arm
-            os: ubuntu-latest
-            extension: ''
           - rid: linux-arm64
-            os: ubuntu-latest
+            os: ubuntu-latest-arm
             extension: ''
           - rid: win-x64
             os: windows-latest
