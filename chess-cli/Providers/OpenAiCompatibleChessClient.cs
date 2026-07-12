@@ -43,7 +43,7 @@ public sealed class OpenAiCompatibleChessClient : IChessMoveClient
         opponent check-and-capture scan.
 
         Finish with:
-        FINAL MOVE: <one supplied legal SAN move>
+        FINAL_MOVE: <one supplied legal SAN move>
         """;
 
     private readonly HttpClient _httpClient;
