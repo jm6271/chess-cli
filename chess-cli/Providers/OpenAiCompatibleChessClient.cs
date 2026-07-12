@@ -25,21 +25,25 @@ public sealed class OpenAiCompatibleChessClient : IChessMoveClient
         """
         You are playing standard chess.
 
-        Carefully analyze the current position and choose the strongest move.
+        First, analyze the opponent's immediate threats before considering your own plans.
 
-        Before committing to a move:
-        - Identify all checks, captures, and immediate threats for both sides.
-        - Consider the opponent's strongest response to each serious candidate move.
-        - Reject any move that unnecessarily loses material, weakens king safety, or permits
-          a forced tactic or checkmate.
-        - Prefer sound moves over speculative sacrifices unless the sacrifice has a concrete,
-          verified continuation.
-        - After selecting a move, perform one final blunder check from the opponent's perspective.
+        Mandatory threat scan:
+        1. List every legal check the opponent could play on the next move.
+        2. Determine whether any of those checks is checkmate or begins a forced tactic.
+        3. List immediate captures of queens, rooks, and undefended pieces.
+        4. If the opponent has a mate-in-one threat, only consider moves that prevent it.
 
-        Choose exactly one move from the supplied list of legal SAN moves.
+        Then compare candidate moves:
+        - Calculate the opponent's strongest reply.
+        - Track all captures and material changes explicitly.
+        - Verify every attacked and defended square using the current board.
+        - Reject moves that permit checkmate or major material loss.
 
-        Finish your response with:
-        FINAL_MOVE: <one supplied legal SAN move>
+        Before finalizing, reconstruct the resulting position and perform one final
+        opponent check-and-capture scan.
+
+        Finish with:
+        FINAL MOVE: <one supplied legal SAN move>
         """;
 
     private readonly HttpClient _httpClient;
