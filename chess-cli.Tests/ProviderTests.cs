@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using ChessCli.Configuration;
 using ChessCli.Game;
 using ChessCli.Providers;
@@ -11,7 +12,7 @@ public sealed class ProviderTests
     [Fact]
     public async Task Client_SendsOpenAiCompatibleRequestToOllama()
     {
-        var handler = new RecordingHandler("e4");
+        var handler = new RecordingHandler("I considered the replies to e4 and found it sound.\nFINAL_MOVE: e4");
         var client = new OpenAiCompatibleChessClient(new HttpClient(handler), _ => null);
         var settings = Settings(ProviderNames.Ollama, "http://localhost:11434/v1");
 
@@ -21,13 +22,14 @@ public sealed class ProviderTests
         Assert.Equal("http://localhost:11434/v1/chat/completions", handler.RequestUri!.ToString());
         Assert.Null(handler.Authorization);
         Assert.Contains("Legal SAN moves", handler.RequestBody);
+        Assert.Contains("FINAL_MOVE:", handler.RequestBody);
         Assert.Contains("\"model\":\"test-model\"", handler.RequestBody);
     }
 
     [Fact]
     public async Task Client_RequiresEnvironmentKeyForOpenAi()
     {
-        var handler = new RecordingHandler("e4");
+        var handler = new RecordingHandler("FINAL_MOVE: e4");
         var client = new OpenAiCompatibleChessClient(new HttpClient(handler), _ => null);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -44,7 +46,7 @@ public sealed class ProviderTests
     [Fact]
     public async Task Client_AddsEnvironmentKeyForCompatibleProvider()
     {
-        var handler = new RecordingHandler("e4");
+        var handler = new RecordingHandler("FINAL_MOVE: e4");
         var client = new OpenAiCompatibleChessClient(new HttpClient(handler), _ => "secret");
 
         await client.GetMoveAsync(
@@ -54,6 +56,20 @@ public sealed class ProviderTests
             CancellationToken.None);
 
         Assert.Equal("Bearer secret", handler.Authorization);
+    }
+
+    [Fact]
+    public async Task Client_RejectsResponseWithoutFinalMoveMarker()
+    {
+        var handler = new RecordingHandler("e4");
+        var client = new OpenAiCompatibleChessClient(new HttpClient(handler), _ => null);
+
+        await Assert.ThrowsAsync<InvalidDataException>(() =>
+            client.GetMoveAsync(
+                new ChessGame(),
+                Settings(ProviderNames.Ollama, "http://localhost:11434/v1"),
+                null,
+                CancellationToken.None));
     }
 
     [Fact]
@@ -115,10 +131,10 @@ public sealed class ProviderTests
             RequestUri = request.RequestUri;
             Authorization = request.Headers.Authorization?.ToString();
             RequestBody = await request.Content!.ReadAsStringAsync(cancellationToken);
-            var json =
-                "{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":\"" +
-                responseMove +
-                "\"}}]}";
+            var json = JsonSerializer.Serialize(new
+            {
+                choices = new[] { new { message = new { role = "assistant", content = responseMove } } }
+            });
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
