@@ -41,6 +41,10 @@ public sealed class AppConfig
         }
 
         profile.Url ??= defaultUrl;
+        // Older config files have no reasoning field; use the new medium default.
+        profile.ReasoningEffort = ReasoningEfforts.IsValid(profile.ReasoningEffort)
+            ? ReasoningEfforts.Normalize(profile.ReasoningEffort)
+            : ReasoningEfforts.Medium;
     }
 }
 
@@ -50,7 +54,36 @@ public sealed class ProviderProfile
 
     public string? Url { get; set; }
 
-    public ProviderProfile Clone() => new() { Model = Model, Url = Url };
+    public string ReasoningEffort { get; set; } = ReasoningEfforts.Medium;
+
+    public ProviderProfile Clone() => new()
+    {
+        Model = Model,
+        Url = Url,
+        ReasoningEffort = ReasoningEffort
+    };
+}
+
+public static class ReasoningEfforts
+{
+    public const string Low = "low";
+    public const string Medium = "medium";
+    public const string High = "high";
+
+    public static bool IsValid(string? value) =>
+        value is not null &&
+        (value.Equals(Low, StringComparison.OrdinalIgnoreCase) ||
+         value.Equals(Medium, StringComparison.OrdinalIgnoreCase) ||
+         value.Equals(High, StringComparison.OrdinalIgnoreCase));
+
+    // Persist canonical values so config files remain predictable across commands.
+    public static string Normalize(string value) => value.ToLowerInvariant() switch
+    {
+        Low => Low,
+        Medium => Medium,
+        High => High,
+        _ => throw new ArgumentException($"Unknown reasoning effort '{value}'.")
+    };
 }
 
 public static class ProviderNames

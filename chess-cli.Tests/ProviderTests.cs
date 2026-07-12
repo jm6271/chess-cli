@@ -24,6 +24,7 @@ public sealed class ProviderTests
         Assert.Contains("Legal SAN moves", handler.RequestBody);
         Assert.Contains("FINAL_MOVE:", handler.RequestBody);
         Assert.Contains("\"model\":\"test-model\"", handler.RequestBody);
+        Assert.Contains("\"reasoning_effort\":\"medium\"", handler.RequestBody);
     }
 
     [Fact]

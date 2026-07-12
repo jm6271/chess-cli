@@ -63,7 +63,7 @@ public sealed class InteractiveRunnerTests : IDisposable
         var runner = CreateRunner(
             game,
             fake,
-            "/provider openai\n/model gpt-test\n/url https://example.test/v1\n/quit\n",
+            "/provider openai\n/model gpt-test\n/url https://example.test/v1\n/reasoning high\n/quit\n",
             new StringWriter(),
             ChessSide.Black);
 
@@ -75,6 +75,7 @@ public sealed class InteractiveRunnerTests : IDisposable
         Assert.Equal(ProviderNames.OpenAi, config.SelectedProvider);
         Assert.Equal("gpt-test", config.GetProfile(ProviderNames.OpenAi).Model);
         Assert.Equal("https://example.test/v1", config.GetProfile(ProviderNames.OpenAi).Url);
+        Assert.Equal(ReasoningEfforts.High, config.GetProfile(ProviderNames.OpenAi).ReasoningEffort);
         Assert.Null(config.GetProfile(ProviderNames.Ollama).Model);
     }
 
