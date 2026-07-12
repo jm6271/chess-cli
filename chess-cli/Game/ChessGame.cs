@@ -11,6 +11,9 @@ public enum ChessSide
 
 public sealed class ChessGame
 {
+    // Keep exported PGN metadata aligned with the version embedded at build time.
+    private static readonly string ApplicationVersion = GetApplicationVersion();
+
     // ChessBoard remains the source of truth for legal moves, turn order, and
     // endgame detection; this class adds the CLI-facing notation and dirty state.
     private ChessBoard _board;
@@ -150,7 +153,7 @@ public sealed class ChessGame
     {
         var date = (now ?? DateTimeOffset.Now).ToString("yyyy.MM.dd");
         return $"""
-            [Event "chess-cli game"]
+            [Event "chess-cli {ApplicationVersion}"]
             [Site "?"]
             [Date "{date}"]
             [Round "-"]
@@ -160,6 +163,17 @@ public sealed class ChessGame
 
             {ToSanMovetext()}
             """;
+    }
+
+    private static string GetApplicationVersion()
+    {
+        var version = typeof(ChessGame).Assembly
+            .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), inherit: false)
+            .OfType<System.Reflection.AssemblyInformationalVersionAttribute>()
+            .SingleOrDefault()?.InformationalVersion ?? "unknown";
+
+        // The SDK omits a leading v from the runtime attribute, while PGN exports use it.
+        return version.StartsWith('v') ? version : $"v{version}";
     }
 
     public static ChessGame Load(string notation)

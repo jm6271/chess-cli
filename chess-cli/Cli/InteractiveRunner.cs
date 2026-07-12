@@ -53,6 +53,10 @@ public sealed class InteractiveRunner
     public async Task<int> RunAsync(CancellationToken cancellationToken = default)
     {
         await _terminalText.WriteLineAsync(_output, "chess-cli — enter a SAN move or /help", "1;96");
+        // Show the active settings before the board so a game always starts with
+        // a clear record of the provider configuration in use.
+        await _output.WriteLineAsync(
+            $"Provider: {_provider.Provider}\nURL: {_provider.Url}\nmodel: {_provider.Model}\nreasoning effort: {_provider.ReasoningEffort}\n");
         await ShowBoardAsync();
 
         // This flag prevents an automatic response from repeating after a failed
