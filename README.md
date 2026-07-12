@@ -19,7 +19,7 @@ API keys are never stored in the application config file.
 Ollama is the default provider and the LLM plays black by default:
 
 ```bash
-chess-cli --model gemma3:12b
+chess-cli --model gemma4:31b
 ```
 
 Use OpenAI and have the model open as white:
@@ -37,16 +37,10 @@ chess-cli --provider compatible --url http://localhost:8080/v1 --model local-mod
 Load a game and automatically save it when the game ends:
 
 ```powershell
-chess-cli --provider ollama --model gemma3:12b --load game.pgn --save finished.pgn
+chess-cli --provider ollama --model gemma4:31b --load game.pgn --save finished.pgn
 ```
 
 Run `chess-cli --help` for all startup options.
-
-Print the installed application version:
-
-```bash
-chess-cli --version
-```
 
 ## Playing
 

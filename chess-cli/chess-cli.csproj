@@ -6,8 +6,8 @@
     <RootNamespace>chess_cli</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.1.0</Version>
-    <AssemblyInformationalVersion>v0.1.0</AssemblyInformationalVersion>
+    <Version>0.2.0</Version>
+    <AssemblyInformationalVersion>v0.2.0</AssemblyInformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <PublishAot>true</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
