@@ -56,6 +56,22 @@ public sealed class InteractiveRunnerTests : IDisposable
     }
 
     [Fact]
+    public async Task Debug_PrintsRawModelOutputBeforeMove()
+    {
+        var fake = new FakeMoveClient("e4");
+        var game = new ChessGame();
+        var output = new StringWriter();
+        var runner = CreateRunner(game, fake, "/move\n/quit\ny\n", output, ChessSide.Black, debug: true);
+
+        await runner.RunAsync();
+
+        var text = output.ToString();
+        Assert.Contains("[debug] Raw model reasoning:\nreasoning for e4", text.Replace("\r\n", "\n"));
+        Assert.True(text.IndexOf("raw response for e4", StringComparison.Ordinal) <
+                    text.IndexOf("LLM move: e4", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task ProviderCommands_PersistPerProviderSettings()
     {
         var fake = new FakeMoveClient();
@@ -85,6 +101,7 @@ public sealed class InteractiveRunnerTests : IDisposable
         string input,
         StringWriter output,
         ChessSide llmSide,
+        bool debug = false,
         bool useColor = false)
     {
         var config = new AppConfig();
@@ -106,6 +123,7 @@ public sealed class InteractiveRunnerTests : IDisposable
             new StringReader(input),
             output,
             output,
+            debug,
             useColor);
     }
 
@@ -123,14 +141,18 @@ public sealed class InteractiveRunnerTests : IDisposable
 
         public int CallCount { get; private set; }
 
-        public Task<string> GetMoveAsync(
+        public Task<ChessMoveResponse> GetMoveAsync(
             ChessGame game,
             ProviderSettings settings,
             string? validationFeedback,
             CancellationToken cancellationToken)
         {
             CallCount++;
-            return Task.FromResult(_moves.Dequeue());
+            var move = _moves.Dequeue();
+            return Task.FromResult(new ChessMoveResponse(
+                move,
+                $"reasoning for {move}",
+                $"raw response for {move}"));
         }
     }
 }

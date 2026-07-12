@@ -34,6 +34,12 @@ Choose the model's reasoning level for this run (the default is `medium`):
 chess-cli --reasoning-effort high
 ```
 
+Print the model's raw reasoning and response before each move:
+
+```bash
+chess-cli --model gemma4:31b --debug
+```
+
 Use any OpenAI-compatible endpoint:
 
 ```powershell

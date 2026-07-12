@@ -22,6 +22,13 @@ internal sealed class ChatMessage
 
     [JsonPropertyName("content")]
     public required string Content { get; init; }
+
+    // OpenAI-compatible providers use either field for separated reasoning text.
+    [JsonPropertyName("reasoning")]
+    public string? Reasoning { get; init; }
+
+    [JsonPropertyName("reasoning_content")]
+    public string? ReasoningContent { get; init; }
 }
 
 internal sealed class ChatCompletionResponse

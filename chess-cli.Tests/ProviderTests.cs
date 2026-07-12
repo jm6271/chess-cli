@@ -16,9 +16,10 @@ public sealed class ProviderTests
         var client = new OpenAiCompatibleChessClient(new HttpClient(handler), _ => null);
         var settings = Settings(ProviderNames.Ollama, "http://localhost:11434/v1");
 
-        var move = await client.GetMoveAsync(new ChessGame(), settings, null, CancellationToken.None);
+        var response = await client.GetMoveAsync(new ChessGame(), settings, null, CancellationToken.None);
 
-        Assert.Equal("e4", move);
+        Assert.Equal("e4", response.Move);
+        Assert.Contains("I considered", response.Response);
         Assert.Equal("http://localhost:11434/v1/chat/completions", handler.RequestUri!.ToString());
         Assert.Null(handler.Authorization);
         Assert.Contains("Legal SAN moves", handler.RequestBody);
@@ -149,14 +150,15 @@ public sealed class ProviderTests
 
         public List<string?> Feedback { get; } = [];
 
-        public Task<string> GetMoveAsync(
+        public Task<ChessMoveResponse> GetMoveAsync(
             ChessGame game,
             ProviderSettings settings,
             string? validationFeedback,
             CancellationToken cancellationToken)
         {
             Feedback.Add(validationFeedback);
-            return Task.FromResult(_moves.Dequeue());
+            var move = _moves.Dequeue();
+            return Task.FromResult(new ChessMoveResponse(move, null, move));
         }
     }
 }

@@ -15,6 +15,7 @@ public sealed class InteractiveRunner
     private readonly TextWriter _output;
     private readonly TextWriter _error;
     private readonly TerminalText _terminalText;
+    private readonly bool _debug;
     private ProviderSettings _provider;
     private string? _savePath;
     private bool _endAnnounced;
@@ -31,6 +32,7 @@ public sealed class InteractiveRunner
         TextReader input,
         TextWriter output,
         TextWriter error,
+        bool debug = false,
         bool useColor = false)
     {
         _game = game;
@@ -44,6 +46,7 @@ public sealed class InteractiveRunner
         _input = input;
         _output = output;
         _error = error;
+        _debug = debug;
         // Styling stays opt-in so files, pipes, and test output remain clean.
         _terminalText = new TerminalText(useColor);
     }
@@ -192,7 +195,11 @@ public sealed class InteractiveRunner
                 _output,
                 $"Asking {_provider.Provider}/{_provider.Model} to move for {_game.SideToMove}...",
                 "93");
-            var result = await _moveCoordinator.MakeMoveAsync(_game, _provider, cancellationToken);
+            var result = await _moveCoordinator.MakeMoveAsync(
+                _game,
+                _provider,
+                cancellationToken,
+                _debug ? WriteDebugResponseAsync : null);
             if (result.Success)
             {
                 // Keep the notation distinct from surrounding status text so it is
@@ -220,6 +227,15 @@ public sealed class InteractiveRunner
         {
             await _error.WriteLineAsync($"Could not get an LLM move: {exception.Message}");
         }
+    }
+
+    private async Task WriteDebugResponseAsync(ChessMoveResponse response)
+    {
+        // Keep the two raw model channels visibly separate without altering either value.
+        await _output.WriteLineAsync("[debug] Raw model reasoning:");
+        await _output.WriteLineAsync(response.Reasoning ?? "<not provided>");
+        await _output.WriteLineAsync("[debug] Raw model response:");
+        await _output.WriteLineAsync(response.Response);
     }
 
     private async Task AnnounceEndAsync(CancellationToken cancellationToken)
