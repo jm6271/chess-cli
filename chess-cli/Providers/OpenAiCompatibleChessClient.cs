@@ -20,8 +20,25 @@ public sealed class OpenAiCompatibleChessClient : IChessMoveClient
     // All supported providers speak the same chat-completions shape; only the
     // endpoint and optional authentication differ.
     private const string SystemPrompt =
-        "You are playing standard chess. Choose exactly one move from the supplied legal SAN moves. " +
-        "Respond with only that SAN move and no prose, punctuation, markdown, or analysis.";
+        """
+        You are playing standard chess.
+
+        Carefully analyze the current position and choose the strongest move.
+
+        Before committing to a move:
+        - Identify all checks, captures, and immediate threats for both sides.
+        - Consider the opponent's strongest response to each serious candidate move.
+        - Reject any move that unnecessarily loses material, weakens king safety, or permits
+          a forced tactic or checkmate.
+        - Prefer sound moves over speculative sacrifices unless the sacrifice has a concrete,
+          verified continuation.
+        - After selecting a move, perform one final blunder check from the opponent's perspective.
+
+        Choose exactly one move from the supplied list of legal SAN moves.
+
+        Finish your response with:
+        FINAL_MOVE: <one supplied legal SAN move>
+        """;
 
     private readonly HttpClient _httpClient;
     private readonly Func<string, string?> _getEnvironmentVariable;
@@ -99,13 +116,32 @@ public sealed class OpenAiCompatibleChessClient : IChessMoveClient
             throw new InvalidDataException("Provider returned invalid JSON.", exception);
         }
 
-        var content = completion?.Choices.FirstOrDefault()?.Message?.Content?.Trim();
+        var content = completion?.Choices.FirstOrDefault()?.Message?.Content;
         if (string.IsNullOrWhiteSpace(content))
         {
             throw new InvalidDataException("Provider returned no move.");
         }
 
-        return content;
+        return ExtractFinalMove(content);
+    }
+
+    private static string ExtractFinalMove(string response)
+    {
+        const string marker = "FINAL_MOVE:";
+        // Use the final marker so analysis can safely mention the required response format.
+        var markerIndex = response.LastIndexOf(marker, StringComparison.Ordinal);
+        if (markerIndex < 0)
+        {
+            throw new InvalidDataException("Provider response did not contain a FINAL_MOVE marker.");
+        }
+
+        var move = response[(markerIndex + marker.Length)..].Trim();
+        if (string.IsNullOrWhiteSpace(move))
+        {
+            throw new InvalidDataException("Provider response did not include a move after FINAL_MOVE.");
+        }
+
+        return move;
     }
 
     private static Uri BuildEndpoint(string baseUrl)
