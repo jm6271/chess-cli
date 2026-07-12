@@ -10,13 +10,26 @@ public sealed class ProviderSettings
 
     public string? Url { get; set; }
 
-    public ProviderProfile ToProfile() => new() { Model = Model, Url = Url };
+    public string ReasoningEffort { get; set; } = ReasoningEfforts.Medium;
+
+    public ProviderProfile ToProfile() => new()
+    {
+        Model = Model,
+        Url = Url,
+        ReasoningEffort = ReasoningEffort
+    };
 
     public void Validate()
     {
         if (!ProviderNames.IsValid(Provider))
         {
             throw new InvalidOperationException($"Unknown provider '{Provider}'.");
+        }
+
+        if (!ReasoningEfforts.IsValid(ReasoningEffort))
+        {
+            throw new InvalidOperationException(
+                "Reasoning effort must be 'low', 'medium', or 'high'.");
         }
 
         if (string.IsNullOrWhiteSpace(Model))
@@ -38,7 +51,8 @@ public sealed class ProviderSettings
         AppConfig config,
         string? providerOverride,
         string? modelOverride,
-        string? urlOverride)
+        string? urlOverride,
+        string? reasoningEffortOverride)
     {
         // Command-line values take precedence for this run; saved profiles supply
         // anything not explicitly overridden without changing the saved config.
@@ -48,7 +62,8 @@ public sealed class ProviderSettings
         {
             Provider = provider,
             Model = modelOverride ?? profile.Model,
-            Url = urlOverride ?? profile.Url
+            Url = urlOverride ?? profile.Url,
+            ReasoningEffort = reasoningEffortOverride ?? profile.ReasoningEffort
         };
     }
 }

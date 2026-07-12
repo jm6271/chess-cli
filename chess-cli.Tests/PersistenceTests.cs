@@ -26,6 +26,7 @@ public sealed class PersistenceTests : IDisposable
         Assert.Equal(ProviderNames.OpenAi, loaded.SelectedProvider);
         Assert.Equal("llama", loaded.GetProfile(ProviderNames.Ollama).Model);
         Assert.Equal("gpt-test", loaded.GetProfile(ProviderNames.OpenAi).Model);
+        Assert.Equal(ReasoningEfforts.Medium, loaded.GetProfile(ProviderNames.OpenAi).ReasoningEffort);
         var json = await File.ReadAllTextAsync(path);
         Assert.DoesNotContain("apiKey", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("secret", json, StringComparison.OrdinalIgnoreCase);

@@ -67,7 +67,8 @@ public sealed class OpenAiCompatibleChessClient : IChessMoveClient
             [
                 new ChatMessage { Role = "system", Content = SystemPrompt },
                 new ChatMessage { Role = "user", Content = prompt }
-            ]
+            ],
+            ReasoningEffort = settings.ReasoningEffort
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)

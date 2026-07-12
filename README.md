@@ -28,6 +28,12 @@ Use OpenAI and have the model open as white:
 chess-cli --provider openai --model your-model --llm-color white
 ```
 
+Choose the model's reasoning level for this run (the default is `medium`):
+
+```bash
+chess-cli --reasoning-effort high
+```
+
 Use any OpenAI-compatible endpoint:
 
 ```powershell
@@ -55,7 +61,8 @@ Interactive commands:
 - `/provider ollama|openai|compatible` switches provider.
 - `/model <id>` changes the current provider's model.
 - `/url <uri>` changes the current provider's API base URL.
+- `/reasoning <low|medium|high>` changes and saves the current provider's reasoning level.
 - `/help` shows command help.
 - `/quit` exits, confirming first if moves have not been saved.
 
-Changes made with `/provider`, `/model`, and `/url` are persisted as per-provider profiles under the user's application-data directory at `chess-cli/config.json`. Startup arguments override those preferences for one run only.
+Changes made with `/provider`, `/model`, `/url`, and `/reasoning` are persisted as per-provider profiles under the user's application-data directory at `chess-cli/config.json`. Startup arguments override those preferences for one run only.

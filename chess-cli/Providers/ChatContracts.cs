@@ -9,6 +9,10 @@ internal sealed class ChatCompletionRequest
 
     [JsonPropertyName("messages")]
     public required ChatMessage[] Messages { get; init; }
+
+    // Reasoning-capable OpenAI-compatible models use this to favor deeper analysis.
+    [JsonPropertyName("reasoning_effort")]
+    public string ReasoningEffort { get; init; } = "medium";
 }
 
 internal sealed class ChatMessage

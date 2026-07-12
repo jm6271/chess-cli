@@ -171,6 +171,9 @@ public sealed class InteractiveRunner
             case "/url":
                 await ChangeUrlAsync(argument, cancellationToken);
                 return CommandResult.Stay;
+            case "/reasoning":
+                await ChangeReasoningEffortAsync(argument, cancellationToken);
+                return CommandResult.Stay;
             default:
                 await _error.WriteLineAsync($"Unknown command '{command}'. Use /help.");
                 return CommandResult.Stay;
@@ -268,7 +271,8 @@ public sealed class InteractiveRunner
         {
             Provider = provider,
             Model = profile.Model,
-            Url = profile.Url
+            Url = profile.Url,
+            ReasoningEffort = profile.ReasoningEffort
         };
         _config.SelectedProvider = provider;
         await PersistConfigAsync(cancellationToken);
@@ -304,6 +308,21 @@ public sealed class InteractiveRunner
         _config.GetProfile(_provider.Provider).Url = _provider.Url;
         await PersistConfigAsync(cancellationToken);
         await _output.WriteLineAsync($"URL: {_provider.Url}");
+    }
+
+    private async Task ChangeReasoningEffortAsync(string? argument, CancellationToken cancellationToken)
+    {
+        if (!ReasoningEfforts.IsValid(argument))
+        {
+            await _error.WriteLineAsync("Usage: /reasoning <low|medium|high>");
+            return;
+        }
+
+        // Save the active provider's level independently from its model and URL.
+        _provider.ReasoningEffort = ReasoningEfforts.Normalize(argument!);
+        _config.GetProfile(_provider.Provider).ReasoningEffort = _provider.ReasoningEffort;
+        await PersistConfigAsync(cancellationToken);
+        await _output.WriteLineAsync($"Reasoning effort: {_provider.ReasoningEffort}");
     }
 
     private async Task PersistConfigAsync(CancellationToken cancellationToken)
@@ -346,6 +365,7 @@ public sealed class InteractiveRunner
           /provider <name>      Switch to ollama, openai, or compatible
           /model <id>           Switch model and persist it for the current provider
           /url <uri>            Change and persist the current provider's base URL
+          /reasoning <level>    Set low, medium, or high reasoning and persist it
           /help                 Show this help
           /quit                 Exit
         """);

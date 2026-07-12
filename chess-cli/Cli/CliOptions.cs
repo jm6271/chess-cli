@@ -6,4 +6,5 @@ public sealed record CliOptions(
     string? LlmColor,
     string? Provider,
     string? Model,
-    string? Url);
+    string? Url,
+    string? ReasoningEffort);

@@ -36,6 +36,10 @@ internal static class Program
         {
             Description = "OpenAI-compatible API base URL, including /v1."
         };
+        var reasoningEffortOption = new Option<string?>("--reasoning-effort")
+        {
+            Description = "Reasoning effort: low, medium, or high. Default: medium."
+        };
 
         var root = new RootCommand("Play a physical chess game with an LLM opponent.");
         root.Options.Add(loadOption);
@@ -44,6 +48,7 @@ internal static class Program
         root.Options.Add(providerOption);
         root.Options.Add(modelOption);
         root.Options.Add(urlOption);
+        root.Options.Add(reasoningEffortOption);
 
         root.SetAction(parseResult =>
         {
@@ -53,7 +58,8 @@ internal static class Program
                 parseResult.GetValue(colorOption),
                 parseResult.GetValue(providerOption),
                 parseResult.GetValue(modelOption),
-                parseResult.GetValue(urlOption));
+                parseResult.GetValue(urlOption),
+                parseResult.GetValue(reasoningEffortOption));
 
             return RunAsync(options).GetAwaiter().GetResult();
         });
@@ -76,6 +82,12 @@ internal static class Program
             return 2;
         }
 
+        if (options.ReasoningEffort is not null && !ReasoningEfforts.IsValid(options.ReasoningEffort))
+        {
+            Console.Error.WriteLine("--reasoning-effort must be 'low', 'medium', or 'high'.");
+            return 2;
+        }
+
         var configStore = new ConfigStore();
         var config = configStore.Load(out var warning);
         if (warning is not null)
@@ -90,7 +102,10 @@ internal static class Program
                 config,
                 options.Provider,
                 options.Model,
-                options.Url);
+                options.Url,
+                options.ReasoningEffort is null
+                    ? null
+                    : ReasoningEfforts.Normalize(options.ReasoningEffort));
             providerSettings.Validate();
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
