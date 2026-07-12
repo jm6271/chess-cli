@@ -7,4 +7,5 @@ public sealed record CliOptions(
     string? Provider,
     string? Model,
     string? Url,
-    string? ReasoningEffort);
+    string? ReasoningEffort,
+    bool Debug);

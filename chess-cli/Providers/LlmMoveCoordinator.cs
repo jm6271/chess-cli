@@ -16,7 +16,8 @@ public sealed class LlmMoveCoordinator
     public async Task<LlmMoveResult> MakeMoveAsync(
         ChessGame game,
         ProviderSettings settings,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Func<ChessMoveResponse, Task>? inspectResponse = null)
     {
         string? feedback = null;
         for (var attempt = 1; attempt <= 3; attempt++)
@@ -24,7 +25,13 @@ public sealed class LlmMoveCoordinator
             // The board is mutated only by TryMove after a response matches a
             // legal move; invalid model output leaves the position unchanged.
             var response = await _client.GetMoveAsync(game, settings, feedback, cancellationToken);
-            if (game.TryMove(response, out var canonicalMove, out var error))
+            // Debug consumers inspect the untouched response before the board changes.
+            if (inspectResponse is not null)
+            {
+                await inspectResponse(response);
+            }
+
+            if (game.TryMove(response.Move, out var canonicalMove, out var error))
             {
                 return new LlmMoveResult(true, canonicalMove, null, attempt);
             }

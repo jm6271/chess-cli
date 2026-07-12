@@ -40,6 +40,10 @@ internal static class Program
         {
             Description = "Reasoning effort: low, medium, or high. Default: medium."
         };
+        var debugOption = new Option<bool>("--debug")
+        {
+            Description = "Print raw model reasoning and response output before each move."
+        };
 
         var root = new RootCommand("Play a physical chess game with an LLM opponent.");
         root.Options.Add(loadOption);
@@ -49,6 +53,7 @@ internal static class Program
         root.Options.Add(modelOption);
         root.Options.Add(urlOption);
         root.Options.Add(reasoningEffortOption);
+        root.Options.Add(debugOption);
 
         root.SetAction(parseResult =>
         {
@@ -59,7 +64,8 @@ internal static class Program
                 parseResult.GetValue(providerOption),
                 parseResult.GetValue(modelOption),
                 parseResult.GetValue(urlOption),
-                parseResult.GetValue(reasoningEffortOption));
+                parseResult.GetValue(reasoningEffortOption),
+                parseResult.GetValue(debugOption));
 
             return RunAsync(options).GetAwaiter().GetResult();
         });
@@ -150,6 +156,7 @@ internal static class Program
             Console.In,
             Console.Out,
             Console.Error,
+            options.Debug,
             useColor: !Console.IsOutputRedirected &&
                       string.IsNullOrEmpty(Environment.GetEnvironmentVariable("NO_COLOR")));
 

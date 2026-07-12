@@ -8,12 +8,14 @@ namespace ChessCli.Providers;
 
 public interface IChessMoveClient
 {
-    Task<string> GetMoveAsync(
+    Task<ChessMoveResponse> GetMoveAsync(
         ChessGame game,
         ProviderSettings settings,
         string? validationFeedback,
         CancellationToken cancellationToken);
 }
+
+public sealed record ChessMoveResponse(string Move, string? Reasoning, string Response);
 
 public sealed class OpenAiCompatibleChessClient : IChessMoveClient
 {
@@ -51,7 +53,7 @@ public sealed class OpenAiCompatibleChessClient : IChessMoveClient
         _getEnvironmentVariable = getEnvironmentVariable ?? Environment.GetEnvironmentVariable;
     }
 
-    public async Task<string> GetMoveAsync(
+    public async Task<ChessMoveResponse> GetMoveAsync(
         ChessGame game,
         ProviderSettings settings,
         string? validationFeedback,
@@ -117,13 +119,17 @@ public sealed class OpenAiCompatibleChessClient : IChessMoveClient
             throw new InvalidDataException("Provider returned invalid JSON.", exception);
         }
 
-        var content = completion?.Choices.FirstOrDefault()?.Message?.Content;
+        var message = completion?.Choices.FirstOrDefault()?.Message;
+        var content = message?.Content;
         if (string.IsNullOrWhiteSpace(content))
         {
             throw new InvalidDataException("Provider returned no move.");
         }
 
-        return ExtractFinalMove(content);
+        return new ChessMoveResponse(
+            ExtractFinalMove(content),
+            message!.Reasoning ?? message.ReasoningContent,
+            content);
     }
 
     private static string ExtractFinalMove(string response)
