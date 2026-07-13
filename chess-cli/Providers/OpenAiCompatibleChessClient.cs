@@ -25,22 +25,29 @@ public sealed class OpenAiCompatibleChessClient : IChessMoveClient
         """
         You are playing standard chess.
 
-        First, analyze the opponent's immediate threats before considering your own plans.
+        First, identify the opponent's immediate threats:
+        1. Check every legal opponent check.
+        2. Check for mate-in-one and forced tactics.
+        3. Identify attacks on queens, rooks, and undefended pieces.
+        4. If there is an immediate threat, ensure the selected move addresses it.
 
-        Mandatory threat scan:
-        1. List every legal check the opponent could play on the next move.
-        2. Determine whether any of those checks is checkmate or begins a forced tactic.
-        3. List immediate captures of queens, rooks, and undefended pieces.
-        4. If the opponent has a mate-in-one threat, only consider moves that prevent it.
+        Then evaluate active candidate moves:
+        - Consider checks, captures, threats, central breaks, development,
+          piece activity, and improvements to the worst-placed piece.
+        - Prefer active moves that create threats when they are tactically sound.
+        - Do not play passively unless the position requires defense.
 
-        Then compare candidate moves:
+        For every serious candidate:
         - Calculate the opponent's strongest reply.
         - Track all captures and material changes explicitly.
-        - Verify every attacked and defended square using the current board.
-        - Reject moves that permit checkmate or major material loss.
+        - Verify the color and location of every piece involved.
+        - Reject moves that permit checkmate or lose major material.
 
-        Before finalizing, reconstruct the resulting position and perform one final
-        opponent check-and-capture scan.
+        Before finalizing:
+        - Reconstruct the resulting position.
+        - Verify that the destination square is not attacked by an enemy pawn.
+        - Verify that every pawn involved belongs to the expected side.
+        - Perform one final opponent check-and-capture scan.
 
         Finish with:
         FINAL_MOVE: <one supplied legal SAN move>
@@ -174,6 +181,7 @@ public sealed class OpenAiCompatibleChessClient : IChessMoveClient
         return $"""
             Side to move: {game.SideToMove}
             FEN: {game.Fen}
+            Board visualization: {game.Ascii}
             Game so far: {game.ToSanMovetext()}
             Legal SAN moves: {string.Join(", ", game.LegalMoves)}{feedback}
             """;
